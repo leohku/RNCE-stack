@@ -59,14 +59,13 @@ jobs:
           tags: dashboard/nginx:${{ steps.get-tag.outputs.TAG }}
       
       # 4. Transport images and docker-compose file
-      - name: Fix Docker socket permissions for runner
+      - name: Debug
         run: |
-          sudo systemctl status docker
-          sudo systemctl start docker
-          sudo chmod 666 /var/run/docker.sock
+          which docker
+
       - name: Transport and load dashboard/nginx image
         run: |
-          sudo docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
+          /usr/bin/docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
           gzip |
           ssh ${MACHINE} "docker load"
       - name: Transport docker-compose.yml to ~/tmp-staging
