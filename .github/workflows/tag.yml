@@ -64,6 +64,7 @@ jobs:
           docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} | gzip | ssh ${MACHINE} docker load
       - name: Transport docker-compose.yml to ~/tmp-staging
         run: |
+          ssh ${MACHINE} "rm -rf ~/tmp-staging || true"
           ssh ${MACHINE} "mkdir ~/tmp-staging"
           scp docker-compose.yml ${MACHINE}:~/tmp-staging/
 
