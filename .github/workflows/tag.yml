@@ -11,7 +11,12 @@ jobs:
       USERNAME: leoho
       RSA_NAME: runner_rsa
     steps:
-      # 1. Networking
+      # 1. Install system dependencies
+      - name: Install pv
+        run: |
+          sudo apt install -y pv
+
+      # 2. Configure networking
       - name: Setup Tailscale
         uses: tailscale/github-action@main
         with:
@@ -38,7 +43,7 @@ jobs:
             User ${USERNAME}
           EOF
       
-      # 2. Add sensitive files
+      # 3. Add sensitive files
       - name: Fetch code
         uses: actions/checkout@v3
       - name: Write gitignored sensitive files to directory
@@ -47,7 +52,7 @@ jobs:
         env:
           NGINX_SSL_CERT_KEY: ${{ secrets.NGINX_SSL_CERT_KEY }}
       
-      # 3. Build images
+      # 4. Build images
       - name: Get tag from Git refs
         id: get-tag
         run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
@@ -58,17 +63,20 @@ jobs:
           push: false
           tags: dashboard/nginx:${{ steps.get-tag.outputs.TAG }}
       
-      # 4. Transport images and docker-compose file
+      # 5. Transport images and docker-compose file
       - name: Transport and load dashboard/nginx image
         run: |
-          docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} | gzip | ssh ${MACHINE} docker load
+          docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
+          gzip |
+          pv |
+          ssh ${MACHINE} docker load
       - name: Transport docker-compose.yml to ~/tmp-staging
         run: |
           ssh ${MACHINE} "rm -rf ~/tmp-staging || true"
           ssh ${MACHINE} "mkdir ~/tmp-staging"
           scp docker-compose.yml ${MACHINE}:~/tmp-staging/
 
-      # 5. Deployment
+      # 6. Deployment
       - name: Prepare new Docker deployment
         run: |
           ssh ${MACHINE} "docker compose -f ~/deployment/docker-compose.yml down || true"
@@ -80,7 +88,7 @@ jobs:
           TAG=${{ steps.get-tag.outputs.TAG }}
           ssh ${MACHINE} 'export TAG='"'${TAG}'"'; docker compose -f ~/deployment/docker-compose.yml up -d'
       
-      # 6. Cleanup
+      # 7. Cleanup
       - name: Remove ~/tmp-staging
         run: |
           ssh ${MACHINE} "rm -rf ~/tmp-staging"
