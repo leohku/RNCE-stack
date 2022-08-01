@@ -59,32 +59,32 @@ jobs:
           push: false
           tags: dashboard/nginx:${{ steps.get-tag.outputs.TAG }}
       
-      # 5. Transport images and docker-compose-prod file
+      # 5. Transport images and compose file
       - name: Transport and load dashboard/nginx image
         run: |
           docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
           gzip |
           ssh ${MACHINE} docker load
-      - name: Transport docker-compose-prod.yml to ~/tmp-staging
+      - name: Transport compose.prod.yaml as compose.yaml
         run: |
           ssh ${MACHINE} "rm -rf ~/tmp-staging || true"
           ssh ${MACHINE} "mkdir ~/tmp-staging"
-          scp docker-compose-prod.yml ${MACHINE}:~/tmp-staging/
+          scp compose.prod.yaml ${MACHINE}:~/tmp-staging/compose.yaml
 
       # 6. Deployment
       - name: Prepare new Docker deployment
         run: |
-          ssh ${MACHINE} "docker compose -f ~/deployment/docker-compose-prod.yml down || true"
+          ssh ${MACHINE} "cd ~/deployment; docker compose down || true"
           ssh ${MACHINE} "rm -rf ~/deployment || true"
           ssh ${MACHINE} "mkdir ~/deployment"
           ssh ${MACHINE} "cp -a ~/tmp-staging/. ~/deployment/"
       - name: Deploy Docker images
         run: |
           TAG=${{ steps.get-tag.outputs.TAG }}
-          ssh ${MACHINE} 'export TAG='"'${TAG}'"'; docker compose -f ~/deployment/docker-compose-prod.yml up -d'
+          ssh ${MACHINE} 'export TAG='"'${TAG}'"'; cd ~/deployment; docker compose up -d'
       
       # 7. Cleanup
-      - name: Remove ~/tmp-staging
+      - name: Remove staging folder
         run: |
           ssh ${MACHINE} "rm -rf ~/tmp-staging"
       - name: Prune unused Docker images

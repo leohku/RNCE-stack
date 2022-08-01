@@ -5,6 +5,6 @@
   "author": "Leo Ho <leoh@connect.hku.hk>",
   "private": true,
   "scripts": {
-    "compose:up": "docker compose -f docker-compose-local.yml up"
+    "compose:up": "docker compose -f compose.local.yaml up"
   }
 }
