@@ -2,7 +2,7 @@ version: "3.3"
 services:
   nginx:
     restart: unless-stopped
-    image: dashboard/nginx:${TAG}
+    image: "dashboard/nginx:${TAG}"
     ports:
       - "80:80"
       - "443:443"
