@@ -12,10 +12,6 @@ jobs:
       RSA_NAME: runner_rsa
     steps:
       # 1. Install system dependencies
-      - name: Install pv
-        run: |
-          sudo apt install -y pv
-
       # 2. Configure networking
       - name: Setup Tailscale
         uses: tailscale/github-action@main
@@ -68,7 +64,6 @@ jobs:
         run: |
           docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
           gzip |
-          pv |
           ssh ${MACHINE} docker load
       - name: Transport docker-compose.yml to ~/tmp-staging
         run: |
