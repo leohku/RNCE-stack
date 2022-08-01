@@ -30,13 +30,13 @@ jobs:
           known_hosts: ${{ steps.machine-meta.outputs.KNOWN_HOSTS }}
       - name: Update ~/.ssh/config file of runner
         run: |
-          cat << EOF
+          cat << EOF >> ~/.ssh/config
           Host ${MACHINE}
             HostName ${{ steps.machine-meta.outputs.MACHINE_IP }}
             IdentityFile ~/.ssh/${RSA_NAME}
             AddKeysToAgent yes
             User ${USERNAME}
-          EOF >> ~/.ssh/config
+          EOF
       
       # 2. Add sensitive files
       - name: Fetch code
