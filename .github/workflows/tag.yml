@@ -1,0 +1,90 @@
+name: Deploy on tag
+on:
+  push:
+    tags:
+      - '*'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      MACHINE: dashboard
+      USERNAME: leoho
+      RSA_NAME: runner_rsa
+    steps:
+      # 1. Networking
+      - name: Setup Tailscale
+        uses: tailscale/github-action@main
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+      - name: Resolve machine IP and RSA key metadata
+        id: machine-meta
+        run: |
+          MACHINE_IP=$(tailscale ip -4 ${MACHINE})
+          echo ::set-output name=MACHINE_IP::${MACHINE_IP}
+          echo ::set-output name=KNOWN_HOSTS::$(ssh-keygen -t rsa ${MACHINE_IP})
+      - name: Add SSH key and known_hosts
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          name: ${{ env.RSA_NAME }}
+          known_hosts: ${{ steps.machine-meta.outputs.KNOWN_HOSTS }}
+      - name: Update ~/.ssh/config file of runner
+        run: |
+          cat << EOF
+          Host ${MACHINE}
+            HostName ${{ steps.machine-meta.outputs.MACHINE_IP }}
+            IdentityFile ~/.ssh/${RSA_NAME}
+            AddKeysToAgent yes
+            User ${USERNAME}
+          EOF >> ~/.ssh/config
+      
+      # 2. Add sensitive files
+      - name: Fetch code
+        uses: actions/checkout@v3
+      - name: Write gitignored sensitive files to directory
+        run: |
+          echo "${NGINX_SSL_CERT_KEY}" >> ./nginx/ssl/dashboard-selfsign.key
+        env:
+          NGINX_SSL_CERT_KEY: ${{ secrets.NGINX_SSL_CERT_KEY }}
+      
+      # 3. Build images
+      - name: Get tag from Git refs
+        id: get-tag
+        run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
+      - name: Build dashboard/nginx image and tag
+        uses: docker/build-push-action@v3
+        with:
+          context: ./nginx
+          push: false
+          tags: dashboard/nginx:${{ steps.get-tag.outputs.TAG }}
+      
+      # 4. Transport images and docker-compose file
+      - name: Transport and load dashboard/nginx image
+        run: |
+          docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
+          gzip |
+          ssh ${MACHINE} "docker load"
+      - name: Transport docker-compose.yml to ~/tmp-staging
+        run: |
+          ssh ${MACHINE} "mkdir ~/tmp-staging"
+          scp docker-compose.yml ${MACHINE}:~/tmp-staging/
+
+      # 5. Deployment
+      - name: Prepare new Docker deployment
+        run: |
+          ssh ${MACHINE} "docker compose -f ~/deployment/docker-compose.yml down || true"
+          ssh ${MACHINE} "rm -rf ~/deployment || true"
+          ssh ${MACHINE} "mkdir ~/deployment"
+          ssh ${MACHINE} "cp -a ~/tmp-staging/. ~/deployment/"
+      - name: Deploy Docker images
+        run: |
+          TAG=${{ steps.get-tag.outputs.TAG }}
+          ssh -o SendEnv=TAG ${MACHINE} "docker compose -f ~/deployment/docker-compose.yml up -d"
+      
+      # 6. Cleanup
+      - name: Remove ~/tmp-staging
+        run: |
+          ssh ${MACHINE} "rm -rf ~/tmp-staging"
+      - name: Prune unused Docker images
+        run: |
+          ssh ${MACHINE} "docker image prune -af"
