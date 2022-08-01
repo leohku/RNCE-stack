@@ -61,7 +61,7 @@ jobs:
       # 4. Transport images and docker-compose file
       - name: Transport and load dashboard/nginx image
         run: |
-          sudo setfacl --modify user:$(whoami):rw /var/run/docker.sock
+          sudo usermod -a -G docker $(whoami)
           docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
           gzip |
           ssh ${MACHINE} "docker load"
