@@ -61,14 +61,10 @@ jobs:
       # 4. Transport images and docker-compose file
       - name: Debug
         run: |
-          which docker
-          docker run hello-world
-
+          sudo systemctl restart docker
       - name: Transport and load dashboard/nginx image
         run: |
-          /usr/bin/docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
-          gzip |
-          ssh ${MACHINE} "docker load"
+          docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} | gzip | ssh ${MACHINE} "docker load"
       - name: Transport docker-compose.yml to ~/tmp-staging
         run: |
           ssh ${MACHINE} "mkdir ~/tmp-staging"
