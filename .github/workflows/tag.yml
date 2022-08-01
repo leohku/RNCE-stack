@@ -78,7 +78,7 @@ jobs:
       - name: Deploy Docker images
         run: |
           TAG=${{ steps.get-tag.outputs.TAG }}
-          ssh -o SendEnv=TAG ${MACHINE} "docker compose -f ~/deployment/docker-compose.yml up -d"
+          ssh -o SendEnv=TAG ${MACHINE} "export TAG; docker compose -f ~/deployment/docker-compose.yml up -d"
       
       # 6. Cleanup
       - name: Remove ~/tmp-staging
