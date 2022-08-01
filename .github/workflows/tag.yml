@@ -61,7 +61,7 @@ jobs:
       # 4. Transport images and docker-compose file
       - name: Transport and load dashboard/nginx image
         run: |
-          docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
+          sudo docker save dashboard/nginx:${{ steps.get-tag.outputs.TAG }} |
           gzip |
           ssh ${MACHINE} "docker load"
       - name: Transport docker-compose.yml to ~/tmp-staging
