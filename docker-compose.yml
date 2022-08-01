@@ -1,0 +1,8 @@
+version: "3.3"
+services:
+  nginx:
+    restart: unless-stopped
+    image: dashboard/nginx:${TAG:-latest}
+    ports:
+      - "80:80"
+      - "443:443"
