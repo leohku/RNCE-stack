@@ -21,7 +21,7 @@ jobs:
         run: |
           MACHINE_IP=$(tailscale ip -4 ${MACHINE})
           echo ::set-output name=MACHINE_IP::${MACHINE_IP}
-          echo ::set-output name=KNOWN_HOSTS::$(ssh-keygen -t rsa ${MACHINE_IP})
+          echo ::set-output name=KNOWN_HOSTS::$(ssh-keyscan -t rsa ${MACHINE_IP})
       - name: Add SSH key and known_hosts
         uses: shimataro/ssh-key-action@v2
         with:
