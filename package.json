@@ -1,0 +1,10 @@
+{
+  "name": "power-mgmt",
+  "version": "alpha",
+  "repository": "https://github.com/leohku/power-mgmt.git",
+  "author": "Leo Ho <leoh@connect.hku.hk>",
+  "private": true,
+  "scripts": {
+    "compose:up": "docker compose -f docker-compose-dev.yml up"
+  }
+}
