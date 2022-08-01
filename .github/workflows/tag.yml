@@ -62,6 +62,7 @@ jobs:
       - name: Debug
         run: |
           which docker
+          docker run hello-world
 
       - name: Transport and load dashboard/nginx image
         run: |
