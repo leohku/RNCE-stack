@@ -64,7 +64,7 @@ jobs:
           sudo chmod 777 /var/run/docker.sock
       - name: Transport and load dashboard/nginx image
         run: |
-          docker save "dashboard/nginx:${{ steps.get-tag.outputs.TAG }}"
+          docker save "dashboard/nginx:${{ steps.get-tag.outputs.TAG }}" | gzip | ssh ${MACHINE} "docker load"
       - name: Transport docker-compose.yml to ~/tmp-staging
         run: |
           ssh ${MACHINE} "mkdir ~/tmp-staging"
