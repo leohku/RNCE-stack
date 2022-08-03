@@ -7,6 +7,9 @@ RNCE Stack (pronounced "rinse") is an unopinionated template for building and qu
 - Fully containerized setup, spin up a working local app by running `yarn local:start`
 - Uses Typescript, React SPAs, and Express.js by default, unopinionated otherwise
 
+## Deployment
+To start an new deployment, tag a new release in your GitHub repo.
+
 ## Customization
 Find and replace `dashboard` in the project repository to customize to your project name and domain.
 
