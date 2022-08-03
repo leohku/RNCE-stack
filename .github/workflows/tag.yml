@@ -54,8 +54,18 @@ jobs:
           directory: ./express
           file_name: .env
           fail_on_empty: true
+
+      # 4. Build frontend
+      - name: Build React SPA
+        working-directory: ./spa
+        run: |
+          yarn
+          yarn build
+      - name: Move build to Nginx public folder
+        run: |
+          cp -r ./spa/build ./nginx/public
       
-      # 4. Build images
+      # 5. Build images
       - name: Get tag from Git refs
         id: get-tag
         run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
@@ -72,7 +82,7 @@ jobs:
           push: false
           tags: dashboard/nginx:${{ steps.get-tag.outputs.TAG }}
       
-      # 5. Transport images and compose file
+      # 6. Transport images and compose file
       - name: Transport and load dashboard/express image
         run: |
           docker save dashboard/express:${{ steps.get-tag.outputs.TAG }} |
@@ -89,7 +99,7 @@ jobs:
           ssh ${MACHINE} "mkdir ~/tmp-staging"
           scp compose.prod.yaml ${MACHINE}:~/tmp-staging/compose.yaml
 
-      # 6. Deployment
+      # 7. Deployment
       - name: Prepare new Docker deployment
         run: |
           ssh ${MACHINE} "cd ~/deployment; docker compose down || true"
@@ -101,7 +111,7 @@ jobs:
           TAG=${{ steps.get-tag.outputs.TAG }}
           ssh ${MACHINE} 'export TAG='"'${TAG}'"'; cd ~/deployment; docker compose up -d'
       
-      # 7. Cleanup
+      # 8. Cleanup
       - name: Remove staging folder
         run: |
           ssh ${MACHINE} "rm -rf ~/tmp-staging"
