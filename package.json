@@ -5,7 +5,9 @@
   "author": "Leo Ho <leoh@connect.hku.hk>",
   "private": true,
   "scripts": {
-    "compose:build": "docker compose -f compose.local.yaml build",
-    "compose:up": "docker compose -f compose.local.yaml up"
+    "static:build": "rm -rf ./nginx/public && cd spa && yarn build && cp -r ./build ../nginx/public",
+    "image:build": "docker compose -f compose.local.yaml build",
+    "compose:up": "docker compose -f compose.local.yaml up",
+    "local:start": "yarn static:build && yarn image:build && yarn compose:up"
   }
 }
