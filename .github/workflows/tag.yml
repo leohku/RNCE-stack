@@ -54,6 +54,16 @@ jobs:
           directory: ./express
           file_name: .env
           fail_on_empty: true
+
+      # 4. Build frontend
+      - name: Build React SPA
+        working-directory: ./spa
+        run: |
+          yarn
+          yarn build
+      - name: Move build to Nginx public folder
+        run: |
+          cp -r ./spa/build ./nginx/public
       
       # 4. Build images
       - name: Get tag from Git refs
